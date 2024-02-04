@@ -1,0 +1,121 @@
+/*
+ * 	file name :application.c
+ *	description: Mini Project 1
+ *	About: stop watch
+ *  Created on: Feb 1, 2024
+ *  Author: Youssef Osman
+ */
+
+
+/* include libraries */
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
+
+/* Global Variables */
+unsigned char sec_first_digit =0;
+unsigned char sec_second_digit =0;
+unsigned char min_first_digit =0;
+unsigned char min_second_digit =0;
+unsigned char hour_first_digit =0;
+unsigned char hour_second_digit =0;
+
+
+ISR(TIMER1_COMPA_vect)
+{
+	if(sec_first_digit == 9)
+	{
+		sec_first_digit = 0;
+		sec_second_digit++;
+	}
+	else
+	{
+		sec_second_digit++;
+
+	}
+
+
+}
+
+void Timer1_init(void)
+{
+
+	/*
+	 * compare mode for compare unit A
+	 * mode number 4
+	 * prescaler = 128
+	 * */
+	TCCR1A |= (1<<FOC1A) ;
+	TCCR1B |= (1<<WGM12) |(1<<CS10) |(1<<CS12);
+
+	/* Enable Compare A Match Interrupt Enable */
+
+	TIMSK |= (1<<OCIE1A);
+
+	/* initial value */
+	TCNT1 = 0;
+
+	/* compare value */
+ 	OCR1A = 977;
+}
+void Enable_SevenSegment(void)
+{
+	PORTA = (PORTA & 0xC0) | (1<<0);
+	PORTC = (PORTC & 0xf0) | (sec_first_digit & 0x0f);
+	_delay_ms(2);
+
+	PORTA = (PORTA & 0xC0) | (1<<1);
+	PORTC = (PORTC & 0xf0) | (sec_second_digit & 0x0f);
+	_delay_ms(2);
+
+	PORTA = (PORTA & 0xC0) | (1<<2);
+	PORTC = (PORTC & 0xf0) | (sec_second_digit & 0x0f);
+	_delay_ms(2);
+
+	PORTA = (PORTA & 0xC0) | (1<<3);
+	PORTC = (PORTC & 0xf0) | (min_first_digit & 0x0f);
+	_delay_ms(2);
+
+	PORTA = (PORTA & 0xC0) | (1<<4);
+	PORTC = (PORTC & 0xf0) | (min_second_digit & 0x0f);
+	_delay_ms(2);
+
+	PORTA = (PORTA & 0xC0) | (1<<5);
+	PORTC = (PORTC & 0xf0) | (hour_first_digit & 0x0f);
+	_delay_ms(2);
+
+	PORTA = (PORTA & 0xC0) | (1<<6);
+	PORTC = (PORTC & 0xf0) | (hour_second_digit & 0x0f);
+	_delay_ms(2);
+
+
+
+
+}
+int main(void)
+{
+	/* Enable Global interrupts */
+	SREG |= (1<<7);
+
+	// define first six pins in port A as output & disabled PINS
+	DDRA |= 0x3F;
+	PORTA &= 0xC0;
+
+	// define first four pins in port C as output , with initial value 0
+	DDRC |= 0x0F;
+	PORTC &= 0xF0;
+
+	/* timer start */
+	Timer1_init();
+
+	while(1){
+		Enable_SevenSegment();
+
+	}
+
+
+
+
+}
+
+
